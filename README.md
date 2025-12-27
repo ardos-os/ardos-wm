@@ -4,8 +4,8 @@
 
 <br><br>
 
-**hyprde-wm** is a heavily modified fork of **Hyprland**, designed to be the
-window management and compositing core of **HyprDE / Hyprside**.
+**everything-wm** is a heavily modified fork of **Hyprland**, designed to be the
+window management core of **HyprDE / Hyprside**.
 
 ## This is **not** a general-purpose Wayland compositor.
 It is an **integrated system component**, tightly coupled with the Hyprside stack.
@@ -17,12 +17,12 @@ It is an **integrated system component**, tightly coupled with the Hyprside stac
 
 </div>
 
-# What is hyprde-wm?
+# What is everything-wm?
 
-**hyprde-wm** is a fork of Hyprland adapted to act as:
+**everything-wm** is a fork of Hyprland adapted to act as:
 
-- The compositor core for **HyprDE**
-- A rendering client of [**Shift**](https://github.com/hyprside/shift), Hyprside’s graphical kernel and session manager
+- The compositor core for **EverythingDE**
+- A rendering client of [**Shift**](https://github.com/hyprside/shift), EverythingOS’s graphical kernel and session manager
 - A tightly integrated subsystem rather than a standalone WM
 
 Unlike upstream Hyprland, this fork **does not aim to be modular, portable, or user-configurable via dotfiles**.
@@ -46,7 +46,7 @@ This fork intentionally diverges from upstream Hyprland in several ways:
 ### Configuration
 - No user-facing dotfile configuration
 - Runtime behavior is controlled by the shell and system services
-- Hyprlang dotfiles are completely deprecated and removed in favor of the **HyprRegistry**
+- Hyprlang dotfiles are completely deprecated and removed in favor of the **EverythingRegistry**
 ### Scope
 - No focus on plugin ecosystems
 - No built-in plugin manager
@@ -75,8 +75,8 @@ Hyprland serves as the **foundation**, not the final product.
 
 This repository is meant to be used **only** as part of:
 
-- **HyprDE**
-- **Hyprside OS**
+- **EverythingDE**
+- **EverythingOS**
 
 If you are looking for:
 - A configurable Wayland compositor
