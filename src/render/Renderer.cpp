@@ -44,6 +44,11 @@
 
 #include <hyprutils/utils/ScopeGuard.hpp>
 #include <iostream>
+
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 using namespace Hyprutils::Utils;
 using namespace Hyprutils::OS;
 using enum NContentType::eContentType;
@@ -286,6 +291,11 @@ bool CHyprRenderer::shouldRenderWindow(PHLWINDOW pWindow) {
 }
 
 void CHyprRenderer::renderWorkspaceWindowsFullscreen(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace, const Time::steady_tp& time) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderWorkspaceWindowsFullscreen");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     PHLWINDOW pWorkspaceWindow = nullptr;
 
     EMIT_HOOK_EVENT("render", RENDER_PRE_WINDOWS);
@@ -377,6 +387,11 @@ void CHyprRenderer::renderWorkspaceWindowsFullscreen(PHLMONITOR pMonitor, PHLWOR
 }
 
 void CHyprRenderer::renderWorkspaceWindows(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace, const Time::steady_tp& time) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderWorkspaceWindows");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     PHLWINDOW lastWindow;
 
     EMIT_HOOK_EVENT("render", RENDER_PRE_WINDOWS);
@@ -475,6 +490,13 @@ void CHyprRenderer::renderWorkspaceWindows(PHLMONITOR pMonitor, PHLWORKSPACE pWo
 }
 
 void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const Time::steady_tp& time, bool decorate, eRenderPassMode mode, bool ignorePosition, bool standalone) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderWindowCPU");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+    if (!pWindow->m_title.empty())
+        ZoneText(pWindow->m_title.c_str(), pWindow->m_title.size());
+#endif
+
     if (pWindow->isHidden() && !standalone)
         return;
 
@@ -733,6 +755,11 @@ void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const T
 }
 
 void CHyprRenderer::renderLayer(PHLLS pLayer, PHLMONITOR pMonitor, const Time::steady_tp& time, bool popups, bool lockscreen) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderLayerCPU");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     if (!pLayer)
         return;
 
@@ -828,6 +855,11 @@ void CHyprRenderer::renderLayer(PHLLS pLayer, PHLMONITOR pMonitor, const Time::s
 }
 
 void CHyprRenderer::renderIMEPopup(CInputPopup* pPopup, PHLMONITOR pMonitor, const Time::steady_tp& time) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderIMEPopup");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     const auto                       POS = pPopup->globalBox().pos();
 
     CSurfacePassElement::SRenderData renderdata = {pMonitor, time, POS};
@@ -868,6 +900,11 @@ void CHyprRenderer::renderIMEPopup(CInputPopup* pPopup, PHLMONITOR pMonitor, con
 }
 
 void CHyprRenderer::renderSessionLockSurface(WP<SSessionLockSurface> pSurface, PHLMONITOR pMonitor, const Time::steady_tp& time) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderSessionLockSurface");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     CSurfacePassElement::SRenderData renderdata = {pMonitor, time, pMonitor->m_position, pMonitor->m_position};
 
     renderdata.blur     = false;
@@ -895,6 +932,11 @@ void CHyprRenderer::renderSessionLockSurface(WP<SSessionLockSurface> pSurface, P
 }
 
 void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace, const Time::steady_tp& time, const Vector2D& translate, const float& scale) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderAllClientsForWorkspace");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     static auto PDIMSPECIAL      = CConfigValue<Hyprlang::FLOAT>("decoration:dim_special");
     static auto PBLURSPECIAL     = CConfigValue<Hyprlang::INT>("decoration:blur:special");
     static auto PBLUR            = CConfigValue<Hyprlang::INT>("decoration:blur:enabled");
@@ -933,23 +975,40 @@ void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPA
     if (!pWorkspace) {
         // allow rendering without a workspace. In this case, just render layers.
 
-        renderBackground(pMonitor);
+        {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::NoWorkspace::Background");
+#endif
+            renderBackground(pMonitor);
+        }
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::NoWorkspace::LayerBackground");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
 
         EMIT_HOOK_EVENT("render", RENDER_POST_WALLPAPER);
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::NoWorkspace::LayerBottom");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::NoWorkspace::LayerTop");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::NoWorkspace::LayerOverlay");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
 
@@ -957,26 +1016,49 @@ void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPA
     }
 
     if (!*PXPMODE) {
-        renderBackground(pMonitor);
+        {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::Background");
+#endif
+            renderBackground(pMonitor);
+        }
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::LayerBackground");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
 
         EMIT_HOOK_EVENT("render", RENDER_POST_WALLPAPER);
 
         for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::LayerBottom");
+#endif
             renderLayer(ls.lock(), pMonitor, time);
         }
     }
 
     // pre window pass
-    g_pHyprOpenGL->preWindowPass();
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::PreWindowPass");
+#endif
+        g_pHyprOpenGL->preWindowPass();
+    }
 
-    if (pWorkspace->m_hasFullscreenWindow)
+    if (pWorkspace->m_hasFullscreenWindow) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::WindowsFullscreen");
+#endif
         renderWorkspaceWindowsFullscreen(pMonitor, pWorkspace, time);
-    else
+    } else {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::WindowsNormal");
+#endif
         renderWorkspaceWindows(pMonitor, pWorkspace, time);
+    }
 
     // and then special
     if (pMonitor->m_specialFade->value() != 0.F) {
@@ -1004,6 +1086,9 @@ void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPA
 
     // special
     for (auto const& ws : g_pCompositor->getWorkspaces()) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::SpecialWorkspaces");
+#endif
         if (ws->m_alpha->value() <= 0.F || !ws->m_isSpecialWorkspace)
             continue;
 
@@ -1015,6 +1100,9 @@ void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPA
 
     // pinned always above
     for (auto const& w : g_pCompositor->m_windows) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::PinnedFloating");
+#endif
         if (w->isHidden() && !w->m_isMapped && !w->m_fadingOut)
             continue;
 
@@ -1032,30 +1120,52 @@ void CHyprRenderer::renderAllClientsForWorkspace(PHLMONITOR pMonitor, PHLWORKSPA
 
     // Render surfaces above windows for monitor
     for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::LayerTop");
+#endif
         renderLayer(ls.lock(), pMonitor, time);
     }
 
     // Render IME popups
     for (auto const& imep : g_pInputManager->m_relay.m_inputMethodPopups) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::IMEPopups");
+#endif
         renderIMEPopup(imep.get(), pMonitor, time);
     }
 
     for (auto const& ls : pMonitor->m_layerSurfaceLayers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::LayerOverlay");
+#endif
         renderLayer(ls.lock(), pMonitor, time);
     }
 
     for (auto const& lsl : pMonitor->m_layerSurfaceLayers) {
         for (auto const& ls : lsl) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderWS::LayerPopups");
+#endif
             renderLayer(ls.lock(), pMonitor, time, true);
         }
     }
 
-    renderDragIcon(pMonitor, time);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderWS::DragIcon");
+#endif
+        renderDragIcon(pMonitor, time);
+    }
 
     //g_pHyprOpenGL->restoreMatrix();
 }
 
 void CHyprRenderer::renderBackground(PHLMONITOR pMonitor) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderBackground");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     static auto PRENDERTEX       = CConfigValue<Hyprlang::INT>("misc:disable_hyprland_logo");
     static auto PBACKGROUNDCOLOR = CConfigValue<Hyprlang::INT>("misc:background_color");
 
@@ -1067,6 +1177,11 @@ void CHyprRenderer::renderBackground(PHLMONITOR pMonitor) {
 }
 
 void CHyprRenderer::renderLockscreen(PHLMONITOR pMonitor, const Time::steady_tp& now, const CBox& geometry) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderLockscreenCPU");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     TRACY_GPU_ZONE("RenderLockscreen");
 
     const bool LOCKED = g_pSessionLockManager->isSessionLocked();
@@ -1105,6 +1220,11 @@ void CHyprRenderer::renderLockscreen(PHLMONITOR pMonitor, const Time::steady_tp&
 }
 
 void CHyprRenderer::renderSessionLockPrimer(PHLMONITOR pMonitor) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderSessionLockPrimer");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     static auto PSESSIONLOCKXRAY = CConfigValue<Hyprlang::INT>("misc:session_lock_xray");
     if (*PSESSIONLOCKXRAY)
         return;
@@ -1117,6 +1237,11 @@ void CHyprRenderer::renderSessionLockPrimer(PHLMONITOR pMonitor) {
 }
 
 void CHyprRenderer::renderSessionLockMissing(PHLMONITOR pMonitor) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderSessionLockMissing");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     const bool ANY_PRESENT = g_pSessionLockManager->anySessionLockSurfacesPresent();
 
     // ANY_PRESENT: render image2, without instructions. Lock still "alive", unless texture dead
@@ -1260,6 +1385,11 @@ void CHyprRenderer::calculateUVForSurface(PHLWINDOW pWindow, SP<CWLSurfaceResour
 }
 
 void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderOutput");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     static std::chrono::high_resolution_clock::time_point renderStart        = std::chrono::high_resolution_clock::now();
     static std::chrono::high_resolution_clock::time_point renderStartOverlay = std::chrono::high_resolution_clock::now();
     static std::chrono::high_resolution_clock::time_point endRenderOverlay   = std::chrono::high_resolution_clock::now();
@@ -1310,11 +1440,23 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
         return;
 
     // tearing and DS first
-    bool shouldTear = pMonitor->updateTearing();
+    bool shouldTear = false;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::UpdateTearing");
+#endif
+        shouldTear = pMonitor->updateTearing();
+    }
 
-    if (pMonitor->attemptDirectScanout()) {
-        return;
-    } else if (!pMonitor->m_lastScanout.expired()) {
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::AttemptDirectScanout");
+#endif
+        if (pMonitor->attemptDirectScanout()) {
+            return;
+        }
+    }
+    if (!pMonitor->m_lastScanout.expired()) {
         Debug::log(LOG, "Left a direct scanout.");
         pMonitor->m_lastScanout.reset();
 
@@ -1325,7 +1467,12 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
         pMonitor->m_drmFormat = pMonitor->m_prevDrmFormat;
     }
 
-    EMIT_HOOK_EVENT("preRender", pMonitor);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::HookPreRender");
+#endif
+        EMIT_HOOK_EVENT("preRender", pMonitor);
+    }
 
     const auto NOW = Time::steadyNow();
 
@@ -1340,7 +1487,12 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
         return;
     }
 
-    EMIT_HOOK_EVENT("render", RENDER_PRE);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::HookRenderPre");
+#endif
+        EMIT_HOOK_EVENT("render", RENDER_PRE);
+    }
 
     pMonitor->m_renderingActive = true;
 
@@ -1373,9 +1525,14 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
     }
 
     CRegion damage, finalDamage;
-    if (!beginRender(pMonitor, damage, RENDER_MODE_NORMAL)) {
-        Debug::log(ERR, "renderer: couldn't beginRender()!");
-        return;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::BeginRender");
+#endif
+        if (!beginRender(pMonitor, damage, RENDER_MODE_NORMAL)) {
+            Debug::log(ERR, "renderer: couldn't beginRender()!");
+            return;
+        }
     }
 
     // if we have no tracking or full tracking, invalidate the entire monitor
@@ -1393,7 +1550,12 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
             pMonitor->m_forceFullFrames = 0;
     }
 
-    EMIT_HOOK_EVENT("render", RENDER_BEGIN);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::HookRenderBegin");
+#endif
+        EMIT_HOOK_EVENT("render", RENDER_BEGIN);
+    }
 
     bool renderCursor = true;
 
@@ -1407,13 +1569,28 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
                 renderCursor = false;
             } else {
                 CBox renderBox = {0, 0, sc<int>(pMonitor->m_pixelSize.x), sc<int>(pMonitor->m_pixelSize.y)};
-                renderWorkspace(pMonitor, pMonitor->m_activeWorkspace, NOW, renderBox);
+                {
+#ifdef TRACY_ENABLE
+                    ZoneScopedN("Hyprland::RenderOutput::RenderWorkspace");
+#endif
+                    renderWorkspace(pMonitor, pMonitor->m_activeWorkspace, NOW, renderBox);
+                }
 
-                renderLockscreen(pMonitor, NOW, renderBox);
+                {
+#ifdef TRACY_ENABLE
+                    ZoneScopedN("Hyprland::RenderOutput::RenderLockscreen");
+#endif
+                    renderLockscreen(pMonitor, NOW, renderBox);
+                }
 
                 if (pMonitor == Desktop::focusState()->monitor()) {
-                    g_pHyprNotificationOverlay->draw(pMonitor);
-                    g_pHyprError->draw();
+                    {
+#ifdef TRACY_ENABLE
+                        ZoneScopedN("Hyprland::RenderOutput::DrawNotificationsAndErrors");
+#endif
+                        g_pHyprNotificationOverlay->draw(pMonitor);
+                        g_pHyprError->draw();
+                    }
                 }
 
                 // for drawing the debug overlay
@@ -1436,11 +1613,25 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
                 }
             }
         } else
-            renderWindow(pMonitor->m_solitaryClient.lock(), pMonitor, NOW, false, RENDER_PASS_MAIN /* solitary = no popups */);
+            {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("Hyprland::RenderOutput::RenderSolitaryWindow");
+#endif
+                renderWindow(pMonitor->m_solitaryClient.lock(), pMonitor, NOW, false, RENDER_PASS_MAIN /* solitary = no popups */);
+            }
     } else if (!pMonitor->isMirror()) {
-        sendFrameEventsToWorkspace(pMonitor, pMonitor->m_activeWorkspace, NOW);
-        if (pMonitor->m_activeSpecialWorkspace)
+        {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderOutput::SendFrameEventsActiveWS");
+#endif
+            sendFrameEventsToWorkspace(pMonitor, pMonitor->m_activeWorkspace, NOW);
+        }
+        if (pMonitor->m_activeSpecialWorkspace) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::RenderOutput::SendFrameEventsSpecialWS");
+#endif
             sendFrameEventsToWorkspace(pMonitor, pMonitor->m_activeSpecialWorkspace, NOW);
+        }
     }
 
     renderCursor = renderCursor && shouldRenderCursor();
@@ -1458,9 +1649,19 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
         m_renderPass.add(makeUnique<CRectPassElement>(data));
     }
 
-    EMIT_HOOK_EVENT("render", RENDER_LAST_MOMENT);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::HookRenderLastMoment");
+#endif
+        EMIT_HOOK_EVENT("render", RENDER_LAST_MOMENT);
+    }
 
-    endRender();
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::EndRender");
+#endif
+        endRender();
+    }
 
     TRACY_GPU_COLLECT;
 
@@ -1480,14 +1681,23 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
 
     pMonitor->m_renderingActive = false;
 
-    EMIT_HOOK_EVENT("render", RENDER_POST);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::HookRenderPost");
+#endif
+        EMIT_HOOK_EVENT("render", RENDER_POST);
+    }
 
     pMonitor->m_output->state->addDamage(frameDamage);
     pMonitor->m_output->state->setPresentationMode(shouldTear ? Aquamarine::eOutputPresentationMode::AQ_OUTPUT_PRESENTATION_IMMEDIATE :
                                                                 Aquamarine::eOutputPresentationMode::AQ_OUTPUT_PRESENTATION_VSYNC);
 
-    if (commit)
+    if (commit) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::RenderOutput::CommitPendingAndSync");
+#endif
         commitPendingAndDoExplicitSync(pMonitor);
+    }
 
     if (shouldTear)
         pMonitor->m_tearingState.busy = true;
@@ -1555,6 +1765,11 @@ static hdr_output_metadata       createHDRMetadata(SImageDescription settings, S
 }
 
 bool CHyprRenderer::commitPendingAndDoExplicitSync(PHLMONITOR pMonitor) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::CommitPending");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     static auto PCT        = CConfigValue<Hyprlang::INT>("render:send_content_type");
     static auto PPASS      = CConfigValue<Hyprlang::INT>("render:cm_fs_passthrough");
     static auto PAUTOHDR   = CConfigValue<Hyprlang::INT>("render:cm_auto_hdr");
@@ -1673,12 +1888,23 @@ bool CHyprRenderer::commitPendingAndDoExplicitSync(PHLMONITOR pMonitor) {
 
     pMonitor->m_previousFSWindow = FS_WINDOW;
 
-    bool ok = pMonitor->m_state.commit();
+    bool ok = false;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::StateCommit");
+#endif
+        ok = pMonitor->m_state.commit();
+    }
     if (!ok) {
         if (pMonitor->m_inFence.isValid()) {
             Debug::log(TRACE, "Monitor state commit failed, retrying without a fence");
             pMonitor->m_output->state->resetExplicitFences();
-            ok = pMonitor->m_state.commit();
+            {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("Hyprland::StateCommitRetryNoFence");
+#endif
+                ok = pMonitor->m_state.commit();
+            }
         }
 
         if (!ok) {
@@ -1694,6 +1920,11 @@ bool CHyprRenderer::commitPendingAndDoExplicitSync(PHLMONITOR pMonitor) {
 }
 
 void CHyprRenderer::renderWorkspace(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace, const Time::steady_tp& now, const CBox& geometry) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderWorkspaceCPU");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     Vector2D translate = {geometry.x, geometry.y};
     float    scale     = sc<float>(geometry.width) / pMonitor->m_pixelSize.x;
 
@@ -1709,7 +1940,15 @@ void CHyprRenderer::renderWorkspace(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace
 }
 
 void CHyprRenderer::sendFrameEventsToWorkspace(PHLMONITOR pMonitor, PHLWORKSPACE pWorkspace, const Time::steady_tp& now) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::SendFrameEventsToWorkspace");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     for (const auto& view : Desktop::View::getViewsForWorkspace(pWorkspace)) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::SendFrameEvent::View");
+#endif
         if (!view->aliveAndVisible())
             continue;
 
@@ -2016,6 +2255,11 @@ void CHyprRenderer::damageRegion(const CRegion& rg) {
 }
 
 void CHyprRenderer::damageMirrorsWith(PHLMONITOR pMonitor, const CRegion& pRegion) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::DamageMirrorsWith");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     for (auto const& mirror : pMonitor->m_mirrors) {
 
         // transform the damage here, so it won't get clipped by the monitor damage ring
@@ -2178,6 +2422,9 @@ void CHyprRenderer::setCursorHidden(bool hide) {
 }
 
 bool CHyprRenderer::shouldRenderCursor() {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::ShouldRenderCursor");
+#endif
     return !m_cursorHidden && m_cursorHasSurface;
 }
 
@@ -2261,6 +2508,10 @@ void CHyprRenderer::unsetEGL() {
 }
 
 bool CHyprRenderer::beginRender(PHLMONITOR pMonitor, CRegion& damage, eRenderMode mode, SP<IHLBuffer> buffer, CFramebuffer* fb, bool simple) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::BeginRender");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
 
     makeEGLCurrent();
 
@@ -2284,7 +2535,6 @@ bool CHyprRenderer::beginRender(PHLMONITOR pMonitor, CRegion& damage, eRenderMod
 
     if (!buffer) {
         m_currentBuffer = pMonitor->m_output->swapchain->next(&bufferAge);
-        std::cout << "HYPRLAND: Acquire buffer\n";
         if (!m_currentBuffer) {
             std::cout << "ERROR HYPRLAND: Acquire buffer fail\n";
             Debug::log(ERR, "Failed to acquire swapchain buffer for {}", pMonitor->m_name);
@@ -2320,10 +2570,19 @@ bool CHyprRenderer::beginRender(PHLMONITOR pMonitor, CRegion& damage, eRenderMod
 }
 
 void CHyprRenderer::endRender(const std::function<void()>& renderingDoneCallback) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::EndRender");
+#endif
+
     const auto  PMONITOR           = g_pHyprOpenGL->m_renderData.pMonitor;
     static auto PNVIDIAANTIFLICKER = CConfigValue<Hyprlang::INT>("opengl:nvidia_anti_flicker");
 
-    g_pHyprOpenGL->m_renderData.damage = m_renderPass.render(g_pHyprOpenGL->m_renderData.damage);
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::EndRender::RenderPass");
+#endif
+        g_pHyprOpenGL->m_renderData.damage = m_renderPass.render(g_pHyprOpenGL->m_renderData.damage);
+    }
 
     auto cleanup = CScopeGuard([this]() {
         if (m_currentRenderbuffer)
@@ -2350,10 +2609,17 @@ void CHyprRenderer::endRender(const std::function<void()>& renderingDoneCallback
         Debug::log(TRACE, "renderer: Explicit sync unsupported, falling back to implicit in endRender");
 
         // nvidia doesn't have implicit sync, so we have to explicitly wait here, llvmpipe and other software renderer seems to bug out aswell.
-        if ((isNvidia() && *PNVIDIAANTIFLICKER) || isSoftware())
+        if ((isNvidia() && *PNVIDIAANTIFLICKER) || isSoftware()) {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::glFinish");
+#endif
             glFinish();
-        else
+        } else {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Hyprland::glFlush");
+#endif
             glFlush(); // mark an implicit sync point
+        }
 
         m_usedAsyncBuffers.clear(); // release all buffer refs and hope implicit sync works
         if (renderingDoneCallback)
@@ -2362,7 +2628,13 @@ void CHyprRenderer::endRender(const std::function<void()>& renderingDoneCallback
         return;
     }
 
-    UP<CEGLSync> eglSync = CEGLSync::create();
+    UP<CEGLSync> eglSync = nullptr;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::EndRender::CreateEGLSync");
+#endif
+        eglSync = CEGLSync::create();
+    }
     if (eglSync && eglSync->isValid()) {
         for (auto const& buf : m_usedAsyncBuffers) {
             for (const auto& releaser : buf->m_syncReleasers) {

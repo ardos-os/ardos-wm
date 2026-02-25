@@ -11,7 +11,7 @@ inline PFNGLQUERYCOUNTEREXTPROC        glQueryCounter;
 inline PFNGLGETQUERYOBJECTIVEXTPROC    glGetQueryObjectiv;
 inline PFNGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64v;
 
-#include "../../subprojects/tracy/public/tracy/TracyOpenGL.hpp"
+#include <tracy/TracyOpenGL.hpp>
 
 #define TRACY_GPU_CONTEXT TracyGpuContext
 #define TRACY_GPU_ZONE(e) TracyGpuZone(e)

@@ -5,6 +5,10 @@
 #include "../pass/ShadowPassElement.hpp"
 #include "../Renderer.hpp"
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 CHyprDropShadowDecoration::CHyprDropShadowDecoration(PHLWINDOW pWindow) : IHyprWindowDecoration(pWindow), m_window(pWindow) {
     ;
 }
@@ -96,6 +100,11 @@ void CHyprDropShadowDecoration::draw(PHLMONITOR pMonitor, float const& a) {
 }
 
 void CHyprDropShadowDecoration::render(PHLMONITOR pMonitor, float const& a) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderShadowDecoration");
+    ZoneText(pMonitor->m_name.c_str(), pMonitor->m_name.size());
+#endif
+
     const auto PWINDOW = m_window.lock();
 
     if (!validMapped(PWINDOW))
@@ -232,6 +241,10 @@ eDecorationLayer CHyprDropShadowDecoration::getDecorationLayer() {
 }
 
 void CHyprDropShadowDecoration::drawShadowInternal(const CBox& box, int round, float roundingPower, int range, CHyprColor color, float a) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderShadowInternal");
+#endif
+
     static auto PSHADOWSHARP = CConfigValue<Hyprlang::INT>("decoration:shadow:sharp");
 
     if (box.w < 1 || box.h < 1)

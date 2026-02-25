@@ -44,6 +44,10 @@
 #include <vector>
 #include <algorithm>
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 using namespace Hyprutils::String;
 using namespace Hyprutils::Utils;
 using namespace Hyprutils::OS;
@@ -791,7 +795,7 @@ bool CMonitor::applyMonitorRule(SMonitorRule* pMonitorRule, bool force) {
 
     // try requested as custom mode jic it works
     if (!success && RULE->resolution != Vector2D() && RULE->resolution != Vector2D(-1, -1) && RULE->resolution != Vector2D(-1, -2)) {
-        auto        refreshRate = m_output->getBackend()->type() == Aquamarine::eBackendType::AQ_BACKEND_DRM ? RULE->refreshRate * 1000 : 0;
+        auto        refreshRate = RULE->refreshRate;
         auto        mode        = makeShared<Aquamarine::SOutputMode>(Aquamarine::SOutputMode{.pixelSize = RULE->resolution, .refreshRate = refreshRate});
         std::string modeStr     = std::format("{:X0}@{:.2f}Hz", mode->pixelSize, mode->refreshRate / 1000.f);
 
@@ -1813,6 +1817,11 @@ uint16_t CMonitor::isDSBlocked(bool full) {
 }
 
 bool CMonitor::attemptDirectScanout() {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::AttemptDirectScanout");
+    ZoneText(m_name.c_str(), m_name.size());
+#endif
+
     const auto blockedReason = isDSBlocked();
     if (blockedReason)
         return false;
@@ -1828,18 +1837,31 @@ bool CMonitor::attemptDirectScanout() {
 
     // #TODO this entire bit needs figuring out, vrr goes down the drain without it
     if (PBUFFER == m_output->state->state().buffer) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::AttemptDirectScanout::ReuseCurrentBuffer");
+#endif
         PSURFACE->presentFeedback(Time::steadyNow(), m_self.lock());
 
         if (m_scanoutNeedsCursorUpdate) {
-            if (!m_state.test()) {
-                Debug::log(TRACE, "attemptDirectScanout: failed basic test on cursor update");
-                return false;
+            {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("Hyprland::AttemptDirectScanout::CursorUpdateTest");
+#endif
+                if (!m_state.test()) {
+                    Debug::log(TRACE, "attemptDirectScanout: failed basic test on cursor update");
+                    return false;
+                }
             }
 
-            if (!m_output->commit()) {
-                Debug::log(TRACE, "attemptDirectScanout: failed to commit cursor update");
-                m_lastScanout.reset();
-                return false;
+            {
+#ifdef TRACY_ENABLE
+                ZoneScopedN("Hyprland::AttemptDirectScanout::CursorUpdateCommit");
+#endif
+                if (!m_output->commit()) {
+                    Debug::log(TRACE, "attemptDirectScanout: failed to commit cursor update");
+                    m_lastScanout.reset();
+                    return false;
+                }
             }
 
             m_scanoutNeedsCursorUpdate = false;
@@ -1869,9 +1891,14 @@ bool CMonitor::attemptDirectScanout() {
     m_output->state->setPresentationMode(m_tearingState.activelyTearing ? Aquamarine::eOutputPresentationMode::AQ_OUTPUT_PRESENTATION_IMMEDIATE :
                                                                           Aquamarine::eOutputPresentationMode::AQ_OUTPUT_PRESENTATION_VSYNC);
 
-    if (!m_state.test()) {
-        Debug::log(TRACE, "attemptDirectScanout: failed basic test");
-        return false;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::AttemptDirectScanout::StateTest");
+#endif
+        if (!m_state.test()) {
+            Debug::log(TRACE, "attemptDirectScanout: failed basic test");
+            return false;
+        }
     }
 
     PSURFACE->presentFeedback(Time::steadyNow(), m_self.lock());
@@ -1881,7 +1908,13 @@ bool CMonitor::attemptDirectScanout() {
 
     // no need to do explicit sync here as surface current can only ever be ready to read
 
-    bool ok = m_output->commit();
+    bool ok = false;
+    {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::AttemptDirectScanout::OutputCommit");
+#endif
+        ok = m_output->commit();
+    }
 
     if (!ok) {
         Debug::log(TRACE, "attemptDirectScanout: failed to scanout surface");
@@ -2111,6 +2144,11 @@ void CMonitorState::ensureBufferPresent() {
 }
 
 bool CMonitorState::commit() {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::OutputCommit");
+    ZoneText(m_owner->m_name.c_str(), m_owner->m_name.size());
+#endif
+
     if (!updateSwapchain())
         return false;
 

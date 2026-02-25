@@ -210,7 +210,8 @@ CProtocolManager::CProtocolManager() {
     // ! please read the top of this file before adding another protocol
 
     for (auto const& b : g_pCompositor->m_aqBackend->getImplementations()) {
-        if (b->type() != Aquamarine::AQ_BACKEND_DRM)
+        if (b->type() != Aquamarine::AQ_BACKEND_DRM&& 
+            b->type() != Aquamarine::AQ_BACKEND_TAB)
             continue;
 
         auto lease = makeShared<CDRMLeaseProtocol>(&wp_drm_lease_device_v1_interface, 1, "DRMLease", b);

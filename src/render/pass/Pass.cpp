@@ -11,6 +11,10 @@
 #include "../../desktop/state/FocusState.hpp"
 #include "../../protocols/core/Compositor.hpp"
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 bool CRenderPass::empty() const {
     return false;
 }
@@ -109,6 +113,14 @@ void CRenderPass::clear() {
 }
 
 CRegion CRenderPass::render(const CRegion& damage_) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::RenderPass");
+    if (g_pHyprOpenGL->m_renderData.pMonitor) {
+        const auto& monitorName = g_pHyprOpenGL->m_renderData.pMonitor->m_name;
+        ZoneText(monitorName.c_str(), monitorName.size());
+    }
+#endif
+
     static auto PDEBUGPASS = CConfigValue<Hyprlang::INT>("debug:pass");
 
     const auto  WILLBLUR = std::ranges::any_of(m_passElements, [](const auto& el) { return el->element->needsLiveBlur(); });
@@ -175,6 +187,9 @@ CRegion CRenderPass::render(const CRegion& damage_) {
         return {};
 
     for (auto& el : m_passElements) {
+#ifdef TRACY_ENABLE
+        ZoneScopedN("Hyprland::CScene::renderIterator");
+#endif
         if (el->discard) {
             el->element->discard();
             continue;

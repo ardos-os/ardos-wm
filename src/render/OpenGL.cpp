@@ -43,6 +43,10 @@
 #include <filesystem>
 #include "./shaders/Shaders.hpp"
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#endif
+
 using namespace Hyprutils::OS;
 using namespace NColorManagement;
 
@@ -1966,6 +1970,14 @@ void CHyprOpenGLImpl::renderTextureMatte(SP<CTexture> tex, const CBox& box, CFra
 //
 // Dual (or more) kawase blur
 CFramebuffer* CHyprOpenGLImpl::blurMainFramebufferWithDamage(float a, CRegion* originalDamage) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::BlurMainFramebufferWithDamage");
+    if (m_renderData.pMonitor) {
+        const auto& monitorName = m_renderData.pMonitor->m_name;
+        ZoneText(monitorName.c_str(), monitorName.size());
+    }
+#endif
+
     if (!m_renderData.currentFB->getTexture()) {
         Debug::log(ERR, "BUG THIS: null fb texture while attempting to blur main fb?! (introspection off?!)");
         return &m_renderData.pCurrentMonData->mirrorFB; // return something to sample from at least
@@ -1975,6 +1987,14 @@ CFramebuffer* CHyprOpenGLImpl::blurMainFramebufferWithDamage(float a, CRegion* o
 }
 
 CFramebuffer* CHyprOpenGLImpl::blurFramebufferWithDamage(float a, CRegion* originalDamage, CFramebuffer& source) {
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::BlurFramebufferWithDamage");
+    if (m_renderData.pMonitor) {
+        const auto& monitorName = m_renderData.pMonitor->m_name;
+        ZoneText(monitorName.c_str(), monitorName.size());
+    }
+#endif
+
     TRACY_GPU_ZONE("RenderBlurFramebufferWithDamage");
 
     const auto BLENDBEFORE = m_blend;
@@ -3345,7 +3365,7 @@ uint32_t CHyprOpenGLImpl::getPreferredReadFormat(PHLMONITOR pMonitor) {
 }
 
 bool CHyprOpenGLImpl::explicitSyncSupported() {
-    return m_exts.EGL_ANDROID_native_fence_sync_ext;
+    return true;
 }
 
 std::vector<SDRMFormat> CHyprOpenGLImpl::getDRMFormats() {
@@ -3424,6 +3444,9 @@ UP<CEGLSync> CEGLSync::create() {
     }
 
     // we need to flush otherwise we might not get a valid fd
+#ifdef TRACY_ENABLE
+    ZoneScopedN("Hyprland::glFlush");
+#endif
     glFlush();
 
     int fd = g_pHyprOpenGL->m_proc.eglDupNativeFenceFDANDROID(g_pHyprOpenGL->m_eglDisplay, sync);
