@@ -4,11 +4,11 @@
 
 <br><br>
 
-**everything-wm** is a heavily modified fork of **Hyprland**, designed to be the
-window management core of **HyprDE / Hyprside**.
+**ardos-wm** is a heavily modified fork of **Hyprland**, designed to be the
+window management core of **Ardos DE / Ardos OS**.
 
 ## This is **not** a general-purpose Wayland compositor.
-It is an **integrated system component**, tightly coupled with the Hyprside stack.
+It is an **integrated system component**, tightly coupled with the Ardos OS stack.
 
 **This repository is intended for system developers, not end users.**
 
@@ -17,12 +17,12 @@ It is an **integrated system component**, tightly coupled with the Hyprside stac
 
 </div>
 
-# What is everything-wm?
+# What is ardos-wm?
 
-**everything-wm** is a fork of Hyprland adapted to act as:
+**ardos-wm** is a fork of Hyprland adapted to act as:
 
-- The compositor core for **EverythingDE**
-- A rendering client of [**Shift**](https://github.com/hyprside/shift), EverythingOS’s graphical kernel and session manager
+- The compositor core for **Ardos DE**
+- A rendering client of [**Shift**](https://github.com/ardos/shift), Ardos OS’s graphical kernel and session manager
 - A tightly integrated subsystem rather than a standalone WM
 
 Unlike upstream Hyprland, this fork **does not aim to be modular, portable, or user-configurable via dotfiles**.
@@ -46,11 +46,11 @@ This fork intentionally diverges from upstream Hyprland in several ways:
 ### Configuration
 - No user-facing dotfile configuration
 - Runtime behavior is controlled by the shell and system services
-- Hyprlang dotfiles are completely deprecated and removed in favor of the **EverythingRegistry**
+- Hyprlang dotfiles are completely deprecated and removed in favor of the **ArdosRegistry**
 ### Scope
 - No focus on plugin ecosystems
 - No built-in plugin manager
-- Features are added based on **Hyprside's requirements**, not general compositor use
+- Features are added based on **Ardos OS's requirements**, not general compositor use
 
 ### Stability Model
 - Changes may break compatibility with upstream Hyprland
@@ -75,8 +75,8 @@ Hyprland serves as the **foundation**, not the final product.
 
 This repository is meant to be used **only** as part of:
 
-- **EverythingDE**
-- **EverythingOS**
+- **Ardos DE**
+- **Ardos OS**
 
 If you are looking for:
 - A configurable Wayland compositor
